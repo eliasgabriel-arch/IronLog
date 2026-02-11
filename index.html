@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#09090b">
+  <meta name="description" content="IronLog — Sistema profesional de seguimiento de entrenamientos.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>IronLog Pro v11</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    /* ================= ESTILOS (CSS) INTEGRADOS ================= */
+    :root {
+      /* Palette Industrial Dark */
+      --bg: #09090b;
+      --surface-1: #121217;
+      --surface-2: #1c1c24;
+      --surface-3: #272730;
+      
+      --border: rgba(255,255,255,0.08);
+      --border-light: rgba(255,255,255,0.12);
+      
+      --primary: #6366f1; /* Indigo vibrante */
+      --primary-dim: rgba(99, 102, 241, 0.15);
+      
+      --accent: #10b981; /* Verde éxito */
+      --danger: #ef4444; /* Rojo error */
+      
+      --text-main: #ededef;
+      --text-dim: #a1a1aa;
+      
+      --font-sans: 'Inter', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      
+      --radius: 16px;
+      --shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+    
+    body {
+      margin: 0; background: var(--bg); color: var(--text-main);
+      font-family: var(--font-sans);
+      padding-bottom: 90px;
+      font-size: 14px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* COMPONENTES */
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    
+    h1, h2, h3 { margin: 0; font-weight: 700; letter-spacing: -0.02em; }
+    h1 { font-size: 22px; } h2 { font-size: 18px; color: var(--text-dim); margin-bottom: 15px; }
+    
+    .card {
+      background: var(--surface-1);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow);
+      transition: transform 0.2s;
+    }
+    
+    button {
+      background: var(--surface-3);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 12px 16px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      transition: all 0.2s;
+    }
+    button:active { transform: scale(0.96); }
+    button.primary { background: var(--primary); border-color: var(--primary); color: #fff; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4); }
+    button.ghost { background: transparent; border-color: transparent; color: var(--text-dim); }
+    button.danger-ghost { background: transparent; border-color: transparent; color: var(--danger); }
+    button.full { width: 100%; }
+
+    input {
+      background: var(--bg); border: 1px solid var(--border);
+      color: var(--text-main); padding: 12px; border-radius: 8px;
+      width: 100%; font-family: var(--font-mono); font-size: 14px;
+    }
+    input:focus { border-color: var(--primary); }
+
+    /* LAYOUTS */
+    .flex { display: flex; align-items: center; gap: 10px; }
+    .between { justify-content: space-between; }
+    .col { flex-direction: column; align-items: stretch; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .hidden { display: none !important; }
+
+    /* DASHBOARD */
+    .stat-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 10px; }
+    .stat-card { background: var(--surface-2); padding: 12px; border-radius: 10px; text-align: center; }
+    .stat-num { font-size: 24px; font-weight: 800; color: var(--primary); font-family: var(--font-mono); }
+    .stat-lbl { font-size: 10px; text-transform: uppercase; color: var(--text-dim); letter-spacing: 1px; }
+
+    /* TRACKER */
+    .ex-card { background: var(--surface-2); border-radius: 12px; padding: 14px; margin-bottom: 12px; border: 1px solid var(--border); }
+    .set-row { display: grid; grid-template-columns: 20px 1fr 1fr 1fr 36px 30px; gap: 8px; align-items: center; margin-top: 8px; }
+    .set-head { display: grid; grid-template-columns: 20px 1fr 1fr 1fr 36px 30px; gap: 8px; font-size: 10px; color: var(--text-dim); text-transform: uppercase; margin-bottom: 6px; }
+    
+    .check-box {
+      width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--border);
+      background: var(--surface-1); display: grid; place-items: center; cursor: pointer; transition: 0.2s;
+    }
+    .check-box.done { background: var(--accent); border-color: var(--accent); color: #000; box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); }
+
+    /* TAGS */
+    .tag { font-size: 10px; padding: 3px 8px; border-radius: 4px; font-weight: 700; text-transform: uppercase; border: 1px solid; }
+    .tag-pri { color: var(--primary); border-color: rgba(99, 102, 241, 0.3); background: rgba(99, 102, 241, 0.1); }
+
+    /* NAV BAR */
+    .nav {
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+      width: 90%; max-width: 400px; height: 60px;
+      background: rgba(18, 18, 23, 0.85); backdrop-filter: blur(12px);
+      border: 1px solid var(--border-light); border-radius: 20px;
+      display: flex; justify-content: space-around; align-items: center;
+      z-index: 100; box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    }
+    .nav-btn {
+      background: none; border: none; color: var(--text-dim);
+      font-size: 20px; padding: 10px; border-radius: 12px; transition: 0.2s;
+    }
+    .nav-btn.active { color: var(--primary); background: rgba(99, 102, 241, 0.1); transform: translateY(-2px); }
+
+    /* MODALS */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 200; display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+    .modal-overlay.open { display: flex; animation: fadeIn 0.2s ease; }
+    .modal-box { background: var(--surface-1); width: 90%; max-width: 450px; border-radius: 16px; border: 1px solid var(--border); max-height: 80vh; display: flex; flex-direction: column; }
+    .modal-head { padding: 15px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; }
+    .modal-body { padding: 15px; overflow-y: auto; }
+
+    /* LOADER */
+    #loader { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; justify-content: center; align-items: center; }
+    .spinner { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s infinite linear; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+  </style>
+</head>
+<body>
+
+<div id="loader"><div class="spinner"></div></div>
+
+<div class="container" id="app"></div>
+
+<nav class="nav">
+  <button class="nav-btn" id="nav-dashboard" onclick="router('dashboard')">📊</button>
+  <button class="nav-btn" id="nav-tracker" onclick="router('tracker')">💪</button>
+  <button class="nav-btn" id="nav-routines" onclick="router('routines')">📅</button>
+  <button class="nav-btn" id="nav-db" onclick="router('db')">📚</button>
+</nav>
+
+<div class="modal-overlay" id="searchModal">
+  <div class="modal-box">
+    <div class="modal-head"><h3>Base de Datos</h3><button class="ghost" onclick="closeModal('searchModal')">✕</button></div>
+    <div class="modal-body">
+      <input id="searchInp" placeholder="Buscar ejercicio..." onkeyup="renderSearch(this.value)">
+      <div id="searchRes" class="col" style="margin-top:10px; gap:8px;"></div>
+      <button class="ghost full mt-2" onclick="promptCreate()">+ Crear Nuevo</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  // ==========================================
+  // ⚠️ PEGA AQUÍ TUS CREDENCIALES DE FIREBASE
+  // ==========================================
+const firebaseConfig = {
+  apiKey: "AIzaSyDKtoGb6lTg9baUTCY658UZJjdQ9Unl1VQ",
+  authDomain: "ironlog-39dc9.firebaseapp.com",
+  projectId: "ironlog-39dc9",
+  storageBucket: "ironlog-39dc9.firebasestorage.app",
+  messagingSenderId: "703800734341",
+  appId: "1:703800734341:web:9da38307811a4d138bafec",
+  measurementId: "G-DXKH2ENH3X"
+};
+
+  // --- DATABASE ---
+  const CORE_DB = [
+    {id:'sq',n:'Sentadilla Barra',t:'Cuádriceps',m:'pierna squat'},
+    {id:'lp',n:'Leg Press',t:'Cuádriceps',m:'prensa maquina'},
+    {id:'rdl',n:'Peso Muerto Rumano',t:'Isquios',m:'femoral deadlift'},
+    {id:'ht',n:'Hip Thrust',t:'Glúteo',m:'puente'},
+    {id:'bp',n:'Press Banca',t:'Pectoral',m:'bench pecho'},
+    {id:'ohp',n:'Press Militar',t:'Hombro',m:'militar shoulder'},
+    {id:'lat',n:'Jalón Pecho',t:'Dorsal',m:'pulldown'},
+    {id:'row',n:'Remo Polea',t:'Espalda',m:'row gironda'},
+    {id:'tri',n:'Ext. Tríceps',t:'Tríceps',m:'polea'},
+    {id:'bic',n:'Curl Bíceps',t:'Bíceps',m:'barra'},
+    {id:'face',n:'Face Pull',t:'Hombro Post',m:'rehab'}
+  ];
+
+  let db, docRef;
+  let state = { routines: {}, history: [], active: null, customs: [] };
+  const DAYS = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+  
+  // Init default routines
+  DAYS.forEach(d => { if(!state.routines[d]) state.routines[d] = []; });
+
+  let context = { mode: null, day: null };
+  let debounceTimer;
+
+  // --- INIT FIREBASE ---
+  if(firebaseConfig.apiKey !== "TU_API_KEY") {
+    const app = initializeApp(firebaseConfig);
+    db = getFirestore(app);
+    docRef = doc(db, "ironlog_pro", "user_v11");
+    
+    onSnapshot(docRef, (snap) => {
+      document.getElementById('loader').classList.add('hidden');
+      if(snap.exists()) {
+        state = { ...state, ...snap.data() };
+        refreshView();
+      } else {
+        saveState();
+      }
+    });
+  } else {
+    document.getElementById('loader').innerHTML = "<div style='color:white; text-align:center'>⚠️ Falta Configuración Firebase<br>Edita el HTML</div>";
+  }
+
+  function saveState() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => { if(docRef) setDoc(docRef, state); }, 800);
+  }
+
+  // --- ROUTER ---
+  window.router = function(page) {
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('nav-'+page).classList.add('active');
+    const app = document.getElementById('app');
+    app.innerHTML = '';
+    
+    if(page === 'dashboard') renderDashboard(app);
+    if(page === 'tracker') renderTracker(app);
+    if(page === 'routines') renderRoutines(app);
+    if(page === 'db') renderDB(app);
+  }
+
+  function refreshView() {
+    const active = document.querySelector('.nav-btn.active');
+    window.router(active ? active.id.replace('nav-','') : 'dashboard');
+  }
+
+  // --- 1. DASHBOARD ---
+  function renderDashboard(root) {
+    const total = state.history.length;
+    const last = state.history[0]?.date || 'N/A';
+    
+    // Chart Data (Last 7)
+    const recent = state.history.slice(0,7).reverse();
+    const labels = recent.map(h => h.name.substring(0,3));
+    const data = recent.map(h => h.exs.reduce((acc,e)=>acc+e.sets.filter(s=>s.d).reduce((a,s)=>a+(s.w*s.r),0),0));
+
+    root.innerHTML = `
+      <div class="flex between mb-2">
+        <h1>Dashboard</h1>
+        <div class="tag">PRO v11</div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-lbl">Sesiones</div></div>
+        <div class="stat-card"><div class="stat-num" style="font-size:16px; line-height:30px">${last}</div><div class="stat-lbl">Último</div></div>
+      </div>
+      <div class="card">
+        <h2>Volumen (Kg)</h2>
+        <canvas id="volChart" height="150"></canvas>
+      </div>
+      <button class="primary full" onclick="router('tracker')">Ir al Tracker ▶</button>
+    `;
+
+    if(recent.length > 0) {
+      new Chart(document.getElementById('volChart'), {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{ label: 'Vol', data: data, borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.1)', fill: true, tension: 0.4 }]
+        },
+        options: { plugins:{legend:{display:false}}, scales:{x:{ticks:{color:'#666'}},y:{display:false}} }
+      });
+    }
+  }
+
+  // --- 2. TRACKER ---
+  function renderTracker(root) {
+    if(!state.active) {
+      root.innerHTML = `<div class="card" style="text-align:center; padding:40px"><h2 style="color:#666">Tracker Inactivo</h2><button class="primary" onclick="router('routines')">Cargar Rutina</button></div>`;
+      return;
+    }
+    const s = state.active;
+    root.innerHTML = `
+      <div class="card flex between">
+        <div><h3>${s.name}</h3><div class="tag">${s.date}</div></div>
+        <button class="primary" onclick="finishS()">Terminar</button>
+      </div>
+      <div id="tkList"></div>
+      <div class="grid-2 mt-4"><button class="ghost" onclick="addExTk()">+ Ejercicio</button><button class="danger-ghost" onclick="cancelS()">Cancelar</button></div>
+    `;
+
+    const list = document.getElementById('tkList');
+    s.exs.forEach((ex, i) => {
+      // Ghost data
+      const prev = getHist(ex.id)[0]?.best || 'New';
+      
+      const el = document.createElement('div'); el.className = 'ex-card';
+      el.innerHTML = `
+        <div class="flex between mb-2"><strong>${ex.n}</strong><button class="ghost" style="padding:4px" onclick="delExTk(${i})">×</button></div>
+        <div class="flex between mb-2" style="background:var(--surface-1); padding:4px 8px; border-radius:4px;">
+          <span style="font-size:10px; font-family:var(--font-mono)">Last: ${prev}</span>
+          <span class="tag tag-pri">${ex.t}</span>
+        </div>
+        <div class="set-head"><span>#</span><span>Kg</span><span>Reps</span><span>RPE</span><span>OK</span></div>
+      `;
+      
+      ex.sets.forEach((set, j) => {
+        const row = document.createElement('div'); row.className = 'set-row';
+        row.innerHTML = `
+          <span style="font-family:var(--font-mono); color:#666">${j+1}</span>
+          <input type="number" value="${set.w}" oninput="upd(${i},${j},'w',this.value)">
+          <input type="number" value="${set.r}" oninput="upd(${i},${j},'r',this.value)">
+          <input type="number" value="${set.rpe||''}" oninput="upd(${i},${j},'rpe',this.value)">
+          <div class="check-box ${set.d?'done':''}" onclick="tog(${i},${j})">✔</div>
+          <button class="danger-ghost" style="padding:0" onclick="delSet(${i},${j})">×</button>
+        `;
+        el.appendChild(row);
+      });
+      const addBtn = document.createElement('button'); addBtn.className='ghost full'; addBtn.innerText='+ Serie'; addBtn.onclick=()=>addSet(i);
+      el.appendChild(addBtn); list.appendChild(el);
+    });
+  }
+
+  // --- 3. RUTINAS ---
+  function renderRoutines(root) {
+    root.innerHTML = `<h2>Plan Semanal</h2>`;
+    DAYS.forEach(d => {
+      const exs = state.routines[d];
+      const div = document.createElement('div'); div.className = 'card';
+      div.innerHTML = `
+        <div class="flex between mb-2"><strong>${d}</strong><div class="flex"><button class="ghost" onclick="editR('${d}')">✏️</button><button class="primary" onclick="startS('${d}')">▶</button></div></div>
+        <div style="color:var(--text-dim); font-size:11px">${exs.length ? exs.map(e=>e.n).join(', ') : 'Descanso'}</div>
+      `;
+      root.appendChild(div);
+    });
+  }
+
+  // --- 4. DB ---
+  function renderDB(root) {
+    const all = [...CORE_DB, ...state.customs];
+    root.innerHTML = `
+      <div class="flex between mb-2"><h2>Base de Datos</h2><button class="primary" onclick="promptCreate()">+ Nuevo</button></div>
+      <input placeholder="Filtrar..." onkeyup="renderSearchDB(this.value)" class="mb-4">
+      <div id="dbList" class="col" style="gap:8px"></div>
+    `;
+    window.renderSearchDB('');
+  }
+
+  // --- LOGIC ---
+  window.editR = (d) => { context = {mode:'routine', day:d}; openSearch(); };
+  window.startS = (d) => {
+    if(state.active && !confirm("¿Sobrescribir?")) return;
+    state.active = { name:d, date: new Date().toLocaleDateString(), exs: state.routines[d].map(e=>({...e, sets:[{w:'',r:'',d:false},{w:'',r:'',d:false}]})) };
+    saveState(); router('tracker');
+  };
+
+  window.upd = (i,j,k,v) => { state.active.exs[i].sets[j][k] = v; saveState(); };
+  window.tog = (i,j) => { state.active.exs[i].sets[j].d = !state.active.exs[i].sets[j].d; saveState(); refreshView(); };
+  window.addSet = (i) => { const l = state.active.exs[i].sets; l.push({w:l.at(-1)?.w||'', r:l.at(-1)?.r||'', d:false}); saveState(); refreshView(); };
+  window.delSet = (i,j) => { state.active.exs[i].sets.splice(j,1); saveState(); refreshView(); };
+  window.delExTk = (i) => { state.active.exs.splice(i,1); saveState(); refreshView(); };
+  window.addExTk = () => { context = {mode:'tracker'}; openSearch(); };
+  window.finishS = () => { if(confirm("¿Guardar?")) { state.history.unshift(state.active); state.active = null; saveState(); router('dashboard'); } };
+  window.cancelS = () => { if(confirm("¿Borrar?")) { state.active = null; saveState(); router('dashboard'); } };
+
+  // --- SEARCH & DB ---
+  function openSearch() { document.getElementById('searchModal').classList.add('open'); renderSearch(''); }
+  window.closeModal = (id) => document.getElementById(id).classList.remove('open');
+  
+  window.renderSearch = (v) => {
+    const t = v.toLowerCase();
+    const all = [...CORE_DB, ...state.customs].filter(e => e.n.toLowerCase().includes(t));
+    document.getElementById('searchRes').innerHTML = all.map(e => `
+      <div class="card" style="margin:0; padding:10px" onclick="selEx('${e.id}')">
+        <div class="flex between"><strong>${e.n}</strong><span class="tag tag-pri">${e.t}</span></div>
+      </div>
+    `).join('');
+  };
+  
+  window.renderSearchDB = (v) => {
+    const t = v.toLowerCase();
+    const all = [...CORE_DB, ...state.customs].filter(e => e.n.toLowerCase().includes(t));
+    document.getElementById('dbList').innerHTML = all.map(e => `
+      <div class="card flex between" style="margin:0"><strong>${e.n}</strong><span class="tag">${e.t}</span></div>
+    `).join('');
+  }
+
+  window.selEx = (id) => {
+    const ex = [...CORE_DB, ...state.customs].find(e => e.id === id);
+    if(context.mode === 'routine') state.routines[context.day].push(ex);
+    else state.active.exs.push({...ex, sets:[{w:'',r:'',d:false}]});
+    saveState(); closeModal('searchModal'); refreshView();
+  };
+
+  window.promptCreate = () => {
+    const n = prompt("Nombre:"); if(!n) return;
+    state.customs.push({id:'c'+Date.now(), n, t:'Custom', m:n.toLowerCase()});
+    saveState(); refreshView(); if(document.getElementById('searchModal').classList.contains('open')) renderSearch('');
+  };
+
+  function getHist(id) {
+    const logs = [];
+    state.history.forEach(h => {
+      const ex = h.exs.find(e => e.id === id);
+      if(ex) {
+        const best = ex.sets.filter(s=>s.d).sort((a,b)=>(b.w*b.r)-(a.w*a.r))[0];
+        if(best) logs.push({best:`${best.w}kg x ${best.r}`});
+      }
+    });
+    return logs;
+  }
+
+  // Init
+  router('dashboard');
+</script>
+</body>
+</html>
